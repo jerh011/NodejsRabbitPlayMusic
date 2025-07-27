@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  // output   = "../generated/prisma"
 }
 
 datasource db {
@@ -14,8 +7,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Tarea {
-  id          Int    @id @default(autoincrement())
-  title       String
-  descripcion String?
+model Tareas{
+id Int @id @default(autoincrement())
+title String 
+descripcion String?
+}
+
+model Artista {
+  id              Int       @id @default(autoincrement())
+  nombre          String    @db.VarChar(100)
+  paisOrigen      String?   @db.VarChar(50) @map("paisorigen")
+  genero          String    @db.VarChar(50)
+  fechaNacimiento DateTime? @map("fechanacimiento") @db.Date
+  biografia       String?
+  imagen          String?   @db.VarChar(255)
+  actualizadoEn   DateTime  @updatedAt @map("actualizadoen") @db.Date
+  creadoEn        DateTime  @default(now()) @map("creadoen") @db.Date
+  albumes         Album[]
+
+  @@map("artistas")
+}
+
+model Album {
+  id               Int       @id @default(autoincrement())
+  titulo           String    @db.VarChar(100)
+  fechaLanzamiento DateTime? @map("fechalanzamiento") @db.Date
+  portada          String?   @db.VarChar(255)
+  descripcion      String?   @db.Text
+  sello            String?   @db.VarChar(100)
+  productor        String    @db.VarChar(100)
+  artistaId        Int       @map("artistaid")
+  creadoEn         DateTime  @default(now()) @map("creadoen") @db.Date
+  actualizadoEn    DateTime  @updatedAt @map("actualizadoen") @db.Date
+
+  artista          Artista   @relation(fields: [artistaId], references: [id], onDelete: Cascade)
+  canciones        Cancion[]
+
+  @@map("albumes")
+}
+
+model Cancion {
+  id            Int      @id @default(autoincrement())
+  titulo        String   @db.VarChar(100)
+  albumId       Int      @map("albumid")
+  duracion      Int
+  numeroTrack   Int      @map("numerotrack")
+  letra         String?  @db.Text @map("letra")
+  compositor    String?  @db.VarChar(100)
+  creadoEn      DateTime?@map("creadoen") @db.Date
+  actualizadoEn DateTime @updatedAt @map("actualizadoen") @db.Date
+
+  album         Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@map("canciones")
 }
