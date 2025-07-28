@@ -3,7 +3,7 @@ export interface ArtistaDTO {
   id: number;
   nombre: string;
   nacionalidad: string;
-  genero: string;
+  genero?: string;
   añoFormacion: number;
   biografia: string;
   imagen: string;

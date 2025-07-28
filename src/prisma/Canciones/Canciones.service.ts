@@ -1,96 +1,170 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaServices } from 'prisma/services/prisma.services';
-
+import { CancionesDTO } from 'src/dtos/Canciones.dtos';
 @Injectable()
 export class CancionesService {
   constructor(private prisma: PrismaServices) {}
 
-  async getAllCanciones(): Promise<any[]> {
-    const cancionesRaw = await this.prisma.$queryRawUnsafe<any[]>(`
-      SELECT 
-        can.id,
-        can.titulo,
-        can.albumid,
-        can.duracion,
-        can.numerotrack AS pista,
-        can.letra,
-        can.compositor,
-        EXTRACT(YEAR FROM can.actualizadoEn) AS año,
+  async GetAllCanciones(): Promise<CancionesDTO[]> {
+    const canciones = await this.prisma.cancion.findMany({
+      include: {
+        album: {
+          include: {
+            artista: true,
+            canciones: true, // 👈 necesario para calcular duración total y número de tracks
+          },
+        },
+      },
+    });
 
-        art.id AS artistaId,
-        art.nombre AS nombre,
-        art.paisorigen AS nacionalidad,
-        art.genero,
-        EXTRACT(YEAR FROM art.creadoen) AS añoFormacion,
-        art.biografia,
-        art.imagen,
-
-        alb.id AS albumId,
-        alb.titulo AS albumTitulo,
-        alb.portada,
-
-        (
-          SELECT SUM(CAST(can2.duracion AS INTEGER))
-          FROM canciones AS can2 
-          WHERE can2.albumid = alb.id
-        ) AS duracionTotalAlbum,
-
-        (
-          SELECT COUNT(*)
-          FROM canciones AS can3 
-          WHERE can3.albumid = alb.id
-        ) AS numeroTracks,
-
-        alb.descripcion,
-        alb.sello,
-        alb.productor,
-        EXTRACT(YEAR FROM alb.fechalanzamiento) AS añoLanzamiento
-
-      FROM canciones AS can
-      INNER JOIN albumes AS alb ON can.albumid = alb.id
-      INNER JOIN artistas AS art ON alb.artistaid = art.id;
-    `);
-
-    return cancionesRaw.map((cancion) => {
-      const duracionEnSegundos = parseInt(cancion.duracion, 10);
-      const minutos = Math.floor(duracionEnSegundos / 60);
-      const segundos = duracionEnSegundos % 60;
-      const duracionFormateada = `${minutos}:${segundos.toString().padStart(2, '0')}`;
+    return canciones.map((cancion) => {
+      const totalSegundos = cancion.album.canciones.reduce(
+        (acc, c) => acc + c.duracion,
+        0,
+      );
+      const minutos = Math.floor(totalSegundos / 60);
+      const segundos = String(totalSegundos % 60).padStart(2, '0');
 
       return {
         id: cancion.id,
         titulo: cancion.titulo,
-        albumid: cancion.albumid,
-        duracion: duracionFormateada,
-        pista: cancion.pista,
-        letra: cancion.letra,
-        compositor: cancion.compositor,
-        año: parseInt(cancion.año, 10),
+        albumId: cancion.albumId,
+        artistaId: cancion.album.artistaId,
+        duracion: `${Math.floor(cancion.duracion / 60)}:${String(cancion.duracion % 60).padStart(2, '0')}`,
+        pista: cancion.numeroTrack,
+        letra: cancion.letra || '',
+        compositor: cancion.compositor || '',
+        año: cancion.album.fechaLanzamiento?.getFullYear() || 0,
+        artista: cancion.album.artista.nombre,
+        album: cancion.album.titulo,
 
         artistaCompleto: {
-          id: cancion.artistaid,
-          nombre: cancion.nombre,
-          nacionalidad: cancion.nacionalidad,
-          genero: cancion.genero,
-          añoFormacion: parseInt(cancion.añoformacion, 10),
-          biografia: cancion.biografia,
-          imagen: cancion.imagen,
+          id: cancion.album.artista.id,
+          nombre: cancion.album.artista.nombre,
+          nacionalidad: cancion.album.artista.paisOrigen || '',
+          genero: cancion.album.artista.genero,
+          añoFormacion:
+            cancion.album.artista.fechaNacimiento?.getFullYear() || 0,
+          biografia: cancion.album.artista.biografia || '',
+          imagen: cancion.album.artista.imagen || '',
         },
 
         albumCompleto: {
-          id: cancion.albumid,
-          titulo: cancion.albumTitulo,
-          artistaId: cancion.artistaid,
-          añoLanzamiento: parseInt(cancion.añoLanzamiento, 10),
-          genero: cancion.genero,
-          duracionTotal: cancion.duracionTotalAlbum,
-          numeroTracks: cancion.numeroTracks,
-          portada: cancion.portada,
-          descripcion: cancion.descripcion,
-          sello: cancion.sello,
-          productor: cancion.productor,
+          id: cancion.album.id,
+          titulo: cancion.album.titulo,
+          artistaId: cancion.album.artistaId,
+          añoLanzamiento: cancion.album.fechaLanzamiento?.getFullYear() || null,
+          genero: cancion.album.artista.genero,
+          duracionTotal: `${minutos}:${segundos}`,
+          numeroTracks: cancion.album.canciones.length.toString(),
+          portada: cancion.album.portada || null,
+          descripcion: cancion.album.descripcion || null,
+          sello: cancion.album.sello || null,
+          productor: cancion.album.productor,
         },
       };
     });
+  }
+  async getCancionPorId(id: number): Promise<CancionesDTO | null> {
+    const cancion = await this.prisma.cancion.findUnique({
+      where: { id },
+      include: {
+        album: {
+          include: {
+            artista: true,
+          },
+        },
+      },
+    });
+
+    if (!cancion) return null;
+
+    return {
+      id: cancion.id,
+      titulo: cancion.titulo,
+      albumId: cancion.albumId,
+      artistaId: cancion.album.artistaId,
+      duracion: `${Math.floor(cancion.duracion / 60)}:${String(cancion.duracion % 60).padStart(2, '0')}`,
+      pista: cancion.numeroTrack,
+      letra: cancion.letra || '',
+      compositor: cancion.compositor || '',
+      año: cancion.album.fechaLanzamiento?.getFullYear() || 0,
+      artista: cancion.album.artista.nombre,
+      album: cancion.album.titulo,
+      artistaCompleto: {
+        id: cancion.album.artista.id,
+        nombre: cancion.album.artista.nombre,
+        nacionalidad: cancion.album.artista.paisOrigen || '',
+        genero: cancion.album.artista.genero,
+        añoFormacion: cancion.album.artista.fechaNacimiento?.getFullYear() || 0,
+        biografia: cancion.album.artista.biografia || '',
+        imagen: cancion.album.artista.imagen || '',
+      },
+      albumCompleto: {
+        id: cancion.album.id,
+        titulo: cancion.album.titulo,
+        añoLanzamiento: cancion.album.fechaLanzamiento?.getFullYear() || null,
+        genero: cancion.album.artista.genero,
+        portada: cancion.album.portada,
+        descripcion: cancion.album.descripcion,
+        sello: cancion.album.sello,
+        productor: cancion.album.productor,
+        artistaId: cancion.album.artistaId,
+      },
+    };
+  }
+
+  async buscarCanciones(termino: string): Promise<any> {
+    const canciones = await this.prisma.cancion.findMany({
+      where: {
+        OR: [
+          {
+            titulo: {
+              contains: termino,
+              mode: 'insensitive',
+            },
+          },
+          {
+            letra: {
+              contains: termino,
+              mode: 'insensitive',
+            },
+          },
+          {
+            album: {
+              is: {
+                titulo: {
+                  contains: termino,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+          {
+            album: {
+              is: {
+                artista: {
+                  is: {
+                    nombre: {
+                      contains: termino,
+                      mode: 'insensitive',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        album: {
+          include: {
+            artista: true,
+            canciones: true,
+          },
+        },
+      },
+    });
+    return canciones;
   }
 }

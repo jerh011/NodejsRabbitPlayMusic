@@ -1,6 +1,5 @@
-import { ArtistaDTO } from './Artista.dto';
 import { AlbumDTO } from './Album.dto';
-
+import { ArtistaDTO } from './Artista.dto';
 export interface CancionesDTO {
   id: number;
   titulo: string;
@@ -11,8 +10,8 @@ export interface CancionesDTO {
   letra: string;
   compositor: string;
   año: number;
-  artista: string;
-  album: string;
-  artistaCompleto: ArtistaDTO;
-  albumCompleto: AlbumDTO;
+  album?: string;
+  artista?: string;
+  artistaCompleto?: ArtistaDTO;
+  albumCompleto?: AlbumDTO;
 }

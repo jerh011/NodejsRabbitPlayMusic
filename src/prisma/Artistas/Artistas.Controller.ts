@@ -19,7 +19,7 @@ export class ArtistasController {
     return this.artistaservice.getAllArtistas();
   }
   @Get('/:id')
-  async getTaskById(@Param('id') id: string): Promise<ArtistaDTO | null> {
+  async getTaskById(@Param('id') id: string): Promise<any | null> {
     return this.artistaservice.getArtistaById(Number(id));
   }
 }

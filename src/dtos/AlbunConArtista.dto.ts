@@ -1,11 +1,9 @@
 // AlbumConArtista.dto.ts
 import { AlbumDTO } from './Album.dto';
 import { ArtistaDTO } from './Artista.dto';
-
+import { CancionesDTO } from './Canciones.dtos';
 export interface AlbumConArtistaDTO extends AlbumDTO {
-  artista: string; // nombre del artista
-  genero: string;
-  duracionTotal: string; // formato mm:ss
-  numeroTracks: number;
+  artista?: string;
   artistaCompleto: ArtistaDTO | null;
+  Canciones?: CancionesDTO[];
 }

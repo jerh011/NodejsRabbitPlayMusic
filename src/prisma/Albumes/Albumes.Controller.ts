@@ -18,4 +18,9 @@ export class ArtistasController {
   async getAllartistas(): Promise<any[]> {
     return this.albumesservice.getAllAlbumes();
   }
+
+  @Get('/:id')
+  async getAllartistasbyId(@Param('id') id: string): Promise<any> {
+    return this.albumesservice.getAlbumById(Number(id));
+  }
 }
