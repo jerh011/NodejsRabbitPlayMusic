@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { GenerosService } from './Generos.service';
 
-@Controller('Generos')
+@Controller('generos')
 export class GenerosContoller {
   constructor(private readonly Generosservice: GenerosService) {}
   @Get()
