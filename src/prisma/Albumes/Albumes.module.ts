@@ -6,7 +6,6 @@ import { Prismamodule } from 'prisma/services/prisma.module';
   controllers: [ArtistasController],
   providers: [AlbumesService],
   exports: [AlbumesService],
-  //importar mas adelante los servicios de artistas
   imports: [Prismamodule], //importamos el prisma module que  asu ves dejara conctarse a la base de deatos
 })
 export class AlbumesModule {}

@@ -1,4 +1,6 @@
-// Artista.dto.ts
+import { AlbumDTO } from './Album.dto';
+
+import { CancionesDTO } from './Canciones.dtos';
 export interface ArtistaDTO {
   id: number;
   nombre: string;
@@ -7,4 +9,6 @@ export interface ArtistaDTO {
   añoFormacion: number;
   biografia: string;
   imagen: string;
+  albumes?: AlbumDTO[];
+  canciones?: CancionesDTO[];
 }

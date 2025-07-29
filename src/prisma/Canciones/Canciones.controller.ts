@@ -20,9 +20,14 @@ export class CancionesController {
     return this.cancionesservices.GetAllCanciones();
   }
 
-  /**
-   * Obtener canción por ID
-   */
+  @Get('buscar')
+  async buscarCanciones(@Query('q') termino: string): Promise<any[]> {
+    if (!termino || termino.trim() === '') {
+      return [];
+    }
+    return this.cancionesservices.buscar(termino);
+  }
+
   @Get(':id')
   async getCancionById(@Param('id') id: string): Promise<CancionesDTO> {
     const parsedId = parseInt(id, 10);
@@ -36,17 +41,5 @@ export class CancionesController {
     }
 
     return cancion;
-  }
-
-  /**
-   * Buscar canciones, artistas o álbumes por nombre o descripción
-   */
-  @Get('buscar/:id')
-  async buscarCanciones(@Param('id') termino: string): Promise<any> {
-    if (!termino || termino.trim() === '') {
-      return []; // o puedes lanzar BadRequestException si prefieres
-    }
-
-    return this.cancionesservices.buscarCanciones(termino);
   }
 }

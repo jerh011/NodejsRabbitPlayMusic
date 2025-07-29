@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaServices } from 'prisma/services/prisma.services';
 import { CancionesDTO } from 'src/dtos/Canciones.dtos';
+import { AlbumesService } from '../Albumes/Albumes.Service';
+import { ArtistaService } from '../Artistas/Artistas.service';
 @Injectable()
 export class CancionesService {
-  constructor(private prisma: PrismaServices) {}
+  constructor(
+    private prisma: PrismaServices,
+    private albservice: AlbumesService,
+    private artservice: ArtistaService,
+  ) {}
 
   async GetAllCanciones(): Promise<CancionesDTO[]> {
     const canciones = await this.prisma.cancion.findMany({
@@ -113,8 +119,7 @@ export class CancionesService {
       },
     };
   }
-
-  async buscarCanciones(termino: string): Promise<any> {
+  async buscarCancionesnombre(termino: string): Promise<CancionesDTO[]> {
     const canciones = await this.prisma.cancion.findMany({
       where: {
         OR: [
@@ -130,41 +135,40 @@ export class CancionesService {
               mode: 'insensitive',
             },
           },
-          {
-            album: {
-              is: {
-                titulo: {
-                  contains: termino,
-                  mode: 'insensitive',
-                },
-              },
-            },
-          },
-          {
-            album: {
-              is: {
-                artista: {
-                  is: {
-                    nombre: {
-                      contains: termino,
-                      mode: 'insensitive',
-                    },
-                  },
-                },
-              },
-            },
-          },
         ],
       },
       include: {
         album: {
           include: {
             artista: true,
-            canciones: true,
           },
         },
       },
     });
-    return canciones;
+
+    return canciones.map((c) => ({
+      id: c.id,
+      titulo: c.titulo,
+      albumId: c.albumId,
+      artistaId: c.album.artista.id,
+      duracion: `${Math.floor(c.duracion / 60)}:${String(c.duracion % 60).padStart(2, '0')}`,
+      pista: c.numeroTrack,
+      letra: c.letra || '',
+      compositor: c.compositor || '',
+      año: c.album.fechaLanzamiento?.getFullYear() || 0,
+      album: c.album.titulo,
+      artista: c.album.artista.nombre,
+    }));
+  }
+  async buscar(termino: string): Promise<any> {
+    const artistas = await this.artservice.buscarArtistanombre(termino);
+    const abumes = await this.albservice.buscarAlbumeasNombre(termino);
+    const canciones = await this.buscarCancionesnombre(termino);
+
+    return {
+      artistas: artistas,
+      albumes: abumes,
+      canciones: canciones,
+    };
   }
 }

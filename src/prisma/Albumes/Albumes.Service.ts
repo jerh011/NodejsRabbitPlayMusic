@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaServices } from 'prisma/services/prisma.services';
-import { AlbumConArtistaDTO } from '../../dtos/AlbunConArtista.dto';
+import { AlbumDTO } from 'src/dtos/Album.dto';
 import { CancionesDTO } from 'src/dtos/Canciones.dtos';
 @Injectable()
 export class AlbumesService {
   constructor(private readonly prisma: PrismaServices) {}
 
-  async getAllAlbumes(): Promise<AlbumConArtistaDTO[]> {
+  async getAllAlbumes(): Promise<AlbumDTO[]> {
     const albumes = await this.prisma.album.findMany({
       include: {
         artista: true,
@@ -48,7 +48,7 @@ export class AlbumesService {
       };
     });
   }
-  async getAlbumById(id: number): Promise<AlbumConArtistaDTO | null> {
+  async getAlbumById(id: number): Promise<AlbumDTO | null> {
     const album = await this.prisma.album.findUnique({
       where: { id },
       include: {
@@ -102,5 +102,55 @@ export class AlbumesService {
       },
       Canciones: canciones,
     };
+  }
+
+  async buscarAlbumeasNombre(termino: string): Promise<AlbumDTO[]> {
+    const albumes = await this.prisma.album.findMany({
+      where: {
+        OR: [
+          {
+            titulo: {
+              contains: termino,
+              mode: 'insensitive',
+            },
+          },
+          {
+            descripcion: {
+              contains: termino,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      include: {
+        artista: true,
+        canciones: true,
+      },
+    });
+
+    return albumes.map((album) => {
+      const totalDuracionSegundos = album.canciones.reduce(
+        (sum, c) => sum + c.duracion,
+        0,
+      );
+
+      const minutos = Math.floor(totalDuracionSegundos / 60);
+      const segundos = String(totalDuracionSegundos % 60).padStart(2, '0');
+
+      return {
+        id: album.id,
+        titulo: album.titulo,
+        artistaId: album.artistaId,
+        añoLanzamiento: album.fechaLanzamiento?.getFullYear() || null,
+        genero: album.artista?.genero || '',
+        duracionTotal: `${minutos}:${segundos}`,
+        numeroTracks: album.canciones.length.toString(),
+        portada: album.portada || null,
+        descripcion: album.descripcion || null,
+        sello: album.sello || null,
+        productor: album.productor,
+        artista: album.artista?.nombre || '',
+      };
+    });
   }
 }

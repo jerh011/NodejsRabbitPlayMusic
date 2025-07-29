@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaServices } from 'prisma/services/prisma.services';
 import { ArtistaDTO } from '../../dtos/Artista.dto';
-import { ArtistawhitalbumsandcancionesDTO } from 'src/dtos/Artistawhitalbumsandcanciones.dto';
 @Injectable()
 export class ArtistaService {
   constructor(private prisma: PrismaServices) {}
@@ -22,9 +21,7 @@ export class ArtistaService {
     }));
   }
 
-  async getArtistaById(
-    id: number,
-  ): Promise<ArtistawhitalbumsandcancionesDTO | null> {
+  async getArtistaById(id: number): Promise<ArtistaDTO | null> {
     const artista = await this.prisma.artista.findUnique({
       where: { id },
       include: {
@@ -86,5 +83,49 @@ export class ArtistaService {
       albumes,
       canciones,
     };
+  }
+
+  async buscarArtistanombre(termino: string): Promise<ArtistaDTO[]> {
+    try {
+      const artistas = await this.prisma.artista.findMany({
+        where: {
+          OR: [
+            {
+              nombre: {
+                contains: termino,
+                mode: 'insensitive',
+              },
+            },
+            {
+              biografia: {
+                not: null,
+                contains: termino,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+        include: {
+          albumes: {
+            include: {
+              canciones: true,
+            },
+          },
+        },
+      });
+
+      // Mapear a DTO
+      return artistas.map((artista) => ({
+        id: artista.id,
+        nombre: artista.nombre,
+        nacionalidad: artista.paisOrigen || '',
+        genero: artista.genero || '',
+        añoFormacion: artista.fechaNacimiento?.getFullYear() || 0,
+        biografia: artista.biografia || '',
+        imagen: artista.imagen || '',
+      }));
+    } catch (error) {
+      throw new Error('Error interno al buscar artistas');
+    }
   }
 }

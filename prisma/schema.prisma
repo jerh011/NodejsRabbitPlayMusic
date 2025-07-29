@@ -47,17 +47,29 @@ model Album {
 }
 
 model Cancion {
-  id            Int      @id @default(autoincrement())
-  titulo        String   @db.VarChar(100)
-  albumId       Int      @map("albumid")
+  id            Int       @id @default(autoincrement())
+  titulo        String    @db.VarChar(100)
+  albumId       Int       @map("albumid")
   duracion      Int
-  numeroTrack   Int      @map("numerotrack")
-  letra         String?  @db.Text @map("letra")
-  compositor    String?  @db.VarChar(100)
-  creadoEn      DateTime?@map("creadoen") @db.Date
-  actualizadoEn DateTime @updatedAt @map("actualizadoen") @db.Date
+  numeroTrack   Int       @map("numerotrack")
+  letra         String?   @db.Text @map("letra")
+  compositor    String?   @db.VarChar(100)
+  creadoEn      DateTime? @map("creadoen") @db.Date
+  actualizadoEn DateTime  @updatedAt @map("actualizadoen") @db.Date
 
-  album         Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  album         Album     @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  favoritos     Favoritos[] // 👈 Relación inversa correctamente definida
 
   @@map("canciones")
 }
+
+model Favoritos {
+  id         Int      @id @default(autoincrement())
+  cancionId  Int      @map("cancionid")
+  creadoEn   DateTime @default(now()) @map("creadoen") @db.Date
+
+  cancion    Cancion  @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+
+  @@map("favoritos")
+}
+

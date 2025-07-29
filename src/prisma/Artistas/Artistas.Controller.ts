@@ -1,11 +1,9 @@
 import {
   Controller,
   Get,
-  Post,
-  Put,
-  Delete,
-  Body,
   Param,
+  Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { ArtistaService } from './Artistas.service';
 //import { Artista } from '@prisma/client'; // ✅ Corrección aquí
@@ -18,6 +16,15 @@ export class ArtistasController {
   async getAllartistas(): Promise<ArtistaDTO[]> {
     return this.artistaservice.getAllArtistas();
   }
+
+  // @Get('buscar')
+  // async buscarArtistas(@Query('q') termino: string): Promise<any[]> {
+  //   if (!termino || termino.trim() === '') {
+  //     return [];
+  //   }
+  //   return this.artistaservice.buscarArtistanombre(termino);
+  // }
+
   @Get('/:id')
   async getTaskById(@Param('id') id: string): Promise<any | null> {
     return this.artistaservice.getArtistaById(Number(id));
