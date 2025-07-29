@@ -10,8 +10,8 @@ export interface CancionesDTO {
   letra: string;
   compositor: string;
   año: number;
-  album?: string;
-  artista?: string;
+  album?: string | AlbumDTO;
+  artista?: string | ArtistaDTO;
   artistaCompleto?: ArtistaDTO;
   albumCompleto?: AlbumDTO;
 }

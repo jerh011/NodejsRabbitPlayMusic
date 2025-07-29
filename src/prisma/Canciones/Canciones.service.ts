@@ -78,6 +78,7 @@ export class CancionesService {
         album: {
           include: {
             artista: true,
+            canciones: true, // ← incluir todas las canciones del álbum
           },
         },
       },
@@ -85,40 +86,61 @@ export class CancionesService {
 
     if (!cancion) return null;
 
+    const artista = cancion.album.artista;
+    const album = cancion.album;
+    const cancionesAlbum = album.canciones;
+
+    const duracionEnMinutos = Math.floor(cancion.duracion / 60);
+    const duracionEnSegundos = String(cancion.duracion % 60).padStart(2, '0');
+    const añoLanzamientoAlbum = album.fechaLanzamiento?.getFullYear() || 0;
+    const añoFormacionArtista = artista.fechaNacimiento?.getFullYear() || 0;
+
+    // Calcular duración total del álbum
+    const duracionTotalSegundos = cancionesAlbum.reduce(
+      (total, c) => total + c.duracion,
+      0,
+    );
+    const totalMinutos = Math.floor(duracionTotalSegundos / 60);
+    const totalSegundos = String(duracionTotalSegundos % 60).padStart(2, '0');
+    const duracionTotal = `${totalMinutos}:${totalSegundos}`;
+
+    const numeroTracks = cancionesAlbum.length.toString();
+
     return {
       id: cancion.id,
       titulo: cancion.titulo,
       albumId: cancion.albumId,
-      artistaId: cancion.album.artistaId,
-      duracion: `${Math.floor(cancion.duracion / 60)}:${String(cancion.duracion % 60).padStart(2, '0')}`,
+      artistaId: artista.id,
+      duracion: `${duracionEnMinutos}:${duracionEnSegundos}`,
       pista: cancion.numeroTrack,
       letra: cancion.letra || '',
       compositor: cancion.compositor || '',
-      año: cancion.album.fechaLanzamiento?.getFullYear() || 0,
-      artista: cancion.album.artista.nombre,
-      album: cancion.album.titulo,
-      artistaCompleto: {
-        id: cancion.album.artista.id,
-        nombre: cancion.album.artista.nombre,
-        nacionalidad: cancion.album.artista.paisOrigen || '',
-        genero: cancion.album.artista.genero,
-        añoFormacion: cancion.album.artista.fechaNacimiento?.getFullYear() || 0,
-        biografia: cancion.album.artista.biografia || '',
-        imagen: cancion.album.artista.imagen || '',
+      año: añoLanzamientoAlbum,
+      artista: {
+        id: artista.id,
+        nombre: artista.nombre,
+        nacionalidad: artista.paisOrigen || '',
+        genero: artista.genero,
+        añoFormacion: añoFormacionArtista,
+        biografia: artista.biografia || '',
+        imagen: artista.imagen || '',
       },
-      albumCompleto: {
-        id: cancion.album.id,
-        titulo: cancion.album.titulo,
-        añoLanzamiento: cancion.album.fechaLanzamiento?.getFullYear() || null,
-        genero: cancion.album.artista.genero,
-        portada: cancion.album.portada,
-        descripcion: cancion.album.descripcion,
-        sello: cancion.album.sello,
-        productor: cancion.album.productor,
-        artistaId: cancion.album.artistaId,
+      album: {
+        id: album.id,
+        titulo: album.titulo,
+        artistaId: album.artistaId,
+        añoLanzamiento: añoLanzamientoAlbum || null,
+        genero: artista.genero,
+        duracionTotal: duracionTotal,
+        numeroTracks: numeroTracks,
+        portada: album.portada,
+        descripcion: album.descripcion,
+        sello: album.sello,
+        productor: album.productor,
       },
     };
   }
+
   async buscarCancionesnombre(termino: string): Promise<CancionesDTO[]> {
     const canciones = await this.prisma.cancion.findMany({
       where: {
@@ -135,6 +157,16 @@ export class CancionesService {
               mode: 'insensitive',
             },
           },
+          {
+            album: {
+              artista: {
+                nombre: {
+                  contains: termino,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
         ],
       },
       include: {
@@ -145,7 +177,6 @@ export class CancionesService {
         },
       },
     });
-
     return canciones.map((c) => ({
       id: c.id,
       titulo: c.titulo,
@@ -166,9 +197,9 @@ export class CancionesService {
     const canciones = await this.buscarCancionesnombre(termino);
 
     return {
-      artistas: artistas,
-      albumes: abumes,
-      canciones: canciones,
+      artistas: artistas ? artistas : [],
+      albumes: abumes ? abumes : [],
+      canciones: canciones ? canciones : [],
     };
   }
 }
