@@ -8,7 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { FavoritosService } from './Favoritos.service';
-import { Tareas } from '@prisma/client'; // ✅ Corrección aquí
+import { Favoritos } from '@prisma/client'; // ✅ Corrección aquí
 
 @Controller('favoritos')
 export class FavoritosContoller {
@@ -17,7 +17,14 @@ export class FavoritosContoller {
   async getAllFavoritos(): Promise<any[]> {
     return this.favoritosservices.getAllFavortios();
   }
-
+  @Post()
+  async createFavoritos(@Body() data: Favoritos): Promise<any> {
+    return this.favoritosservices.createFavoritos(data);
+  }
+  @Delete(':id')
+  async DeleteTask(@Param('id') id: string): Promise<any> {
+    return this.favoritosservices.DeleteFavoritosByID(Number(id));
+  }
   // @Post()
   // async createFavoritos(@Body() data: any): Promise<any> {
   //   return this.favoritosservices.CreateFavoritos(data);
