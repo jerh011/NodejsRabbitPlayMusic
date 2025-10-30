@@ -9,7 +9,7 @@ import {
 import { CancionesService } from './Canciones.service';
 import { CancionesDTO } from 'src/dtos/Canciones.dtos';
 
-@Controller('canciones')
+@Controller()
 export class CancionesController {
   constructor(private readonly cancionesservices: CancionesService) {}
   @Get()
