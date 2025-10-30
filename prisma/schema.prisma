@@ -54,18 +54,9 @@ model Cancion {
   actualizadoEn DateTime  @updatedAt @map("actualizadoen") @db.Date
 
   album         Album     @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  favoritos     Favoritos[] // 👈 Relación inversa correctamente definida
 
   @@map("canciones")
 }
 
-model Favoritos {
-  id         Int      @id @default(autoincrement())
-  cancionId  Int      @map("cancionid")
-  creadoEn   DateTime @default(now()) @map("creadoen") @db.Date
 
-  cancion    Cancion  @relation(fields: [cancionId], references: [id], onDelete: Cascade)
-
-  @@map("favoritos")
-}
 
