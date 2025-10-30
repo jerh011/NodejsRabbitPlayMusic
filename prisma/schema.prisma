@@ -7,11 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model Tareas{
-// id Int @id @default(autoincrement())
-// title String 
-// descripcion String?
-// }
+
 
 model Artista {
   id              Int       @id @default(autoincrement())
